@@ -10,6 +10,15 @@ token = os.environ.get("FLEX_TOKEN")
 DB_URL = os.environ.get("DB_URL")
 TABLE_NAME = "ib_transactions"
 
+# -
+# ---- Symbol normalization settings ----
+UNDERLYING_SYMBOL_MAP = {
+    "TUI1": "TUI1.DE",
+    "VNA": "VNA.DE",
+}
+# --------------------------------------
+#-
+
 # 1. Get reference code
 url_req = f"https://ndcdyn.interactivebrokers.com/AccountManagement/FlexWebService/SendRequest?t={token}&q={flex_query_id}&v=3"
 response = requests.get(url_req)
@@ -55,6 +64,23 @@ for tr in root.findall(".//Trade"):
         "Note": tr.get("note")
     })
 df = pd.DataFrame(trades)
+
+#-
+# ---- Normalize UnderlyingSymbol using mapping ----
+if not df.empty and "UnderlyingSymbol" in df.columns:
+    u_raw = df["UnderlyingSymbol"]
+
+    # normalize input
+    u_norm = u_raw.astype(str).str.strip().str.upper()
+
+    # apply mapping only where key exists
+    df["UnderlyingSymbol"] = u_norm.map(UNDERLYING_SYMBOL_MAP).fillna(u_norm)
+
+    changed = (u_norm != df["UnderlyingSymbol"]).sum()
+    if changed > 0:
+        print(f"Normalized UnderlyingSymbol using mapping: {changed} rows updated.")
+# -------------------------------------------------
+#-
 
 if not df.empty:
     print("Read trades:")

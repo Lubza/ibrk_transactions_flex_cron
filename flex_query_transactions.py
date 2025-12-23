@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 import time
 from sqlalchemy import create_engine
+import hashlib
 
 flex_query_id = os.environ.get("FLEX_QUERY_ID")
 token = os.environ.get("FLEX_TOKEN")
@@ -81,6 +82,37 @@ if not df.empty and "UnderlyingSymbol" in df.columns:
         print(f"Normalized UnderlyingSymbol using mapping: {changed} rows updated.")
 # -------------------------------------------------
 #-
+
+# ---- Create Trade_id (hash) ----
+if not df.empty:
+    # stable formatting for Quantity to avoid "20" vs "20.0"
+    def fmt_qty(x):
+        if x is None or (isinstance(x, float) and pd.isna(x)):
+            return ""
+        # remove trailing .0 if it's an integer
+        if float(x).is_integer():
+            return str(int(x))
+        # otherwise keep reasonable precision
+        return f"{float(x):.6f}".rstrip("0").rstrip(".")
+
+    def make_trade_id(row):
+        parts = [
+            str(row.get("Symbol") or "").strip().upper(),
+            str(row.get("AssetClass") or "").strip().upper(),
+            str(row.get("Buy/Sell") or "").strip().upper(),
+            str(row.get("CurrencyPrimary") or "").strip().upper(),
+            str(row.get("TradeDate") or "").strip(),   # keep as provided (YYYYMMDD)
+            fmt_qty(row.get("Quantity")),
+        ]
+        fingerprint = "|".join(parts)
+        return hashlib.sha1(fingerprint.encode("utf-8")).hexdigest()
+
+    df["Trade_id"] = df.apply(make_trade_id, axis=1)
+
+    # optional: quick sanity print
+    print(f"Generated Trade_id for {df['Trade_id'].notna().sum()} rows.")
+# --------------------------------
+
 
 if not df.empty:
     print("Read trades:")

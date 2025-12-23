@@ -118,19 +118,29 @@ if not df.empty:
     print("Read trades:")
     print(df)
 
-    # Save to database: append/merge new records
+     # Save to database: append/merge new records
     try:
         engine = create_engine(DB_URL)
+
+        # ✅ správne načítanie tabuľky
         try:
-            df_old = pd.read_sql(TABLE_NAME, engine)
+            df_old = pd.read_sql(f'SELECT * FROM public."{TABLE_NAME}"', engine)
         except Exception:
             df_old = pd.DataFrame()
-        ALL_COLUMNS = list(df.columns)
-        common = [col for col in ALL_COLUMNS if col in df.columns and col in df_old.columns]
+
         df_merged = pd.concat([df_old, df], ignore_index=True)
-        df_merged = df_merged.drop_duplicates(subset=common)
+
+        # ✅ deduplikácia – najlepšie podľa Trade_id, keď už ho máš
+        if "Trade_id" in df_merged.columns:
+            df_merged = df_merged.drop_duplicates(subset=["Trade_id"])
+        else:
+            # fallback (ak by Trade_id chýbal)
+            df_merged = df_merged.drop_duplicates()
+
+        # ✅ zapíš späť
         df_merged.to_sql(TABLE_NAME, engine, if_exists="replace", index=False)
         print(f"Successfully saved {len(df_merged)} unique records to table '{TABLE_NAME}' in the database.")
+
     except Exception as e:
         print("\nError while saving to database:")
         print(str(e))

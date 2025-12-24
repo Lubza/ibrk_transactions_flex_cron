@@ -11,6 +11,11 @@ token = os.environ.get("FLEX_TOKEN")
 DB_URL = os.environ.get("DB_URL")
 TABLE_NAME = "ib_transactions"
 
+print("RUN VERSION: Trade_id enabled v1")
+print("FLEX_QUERY_ID:", flex_query_id)
+print("DB_URL prefix:", (DB_URL or "")[:50])
+
+
 # -
 # ---- Symbol normalization settings ----
 UNDERLYING_SYMBOL_MAP = {
@@ -122,10 +127,17 @@ if not df.empty:
     try:
         engine = create_engine(DB_URL)
 
+        with engine.connect() as conn:
+            dbinfo = conn.execute("SELECT current_database(), current_user").fetchone()
+            print("Connected to:", dbinfo)
+
         # ✅ správne načítanie tabuľky
+        import traceback
         try:
             df_old = pd.read_sql(f'SELECT * FROM public."{TABLE_NAME}"', engine)
         except Exception:
+            print("ERROR reading old table:")
+            print(traceback.format_exc())
             df_old = pd.DataFrame()
 
         df_merged = pd.concat([df_old, df], ignore_index=True)
@@ -138,11 +150,22 @@ if not df.empty:
             df_merged = df_merged.drop_duplicates()
 
         # ✅ zapíš späť
+        print("Rows - new:", len(df), "old:", len(df_old), "merged:", len(df_merged))
         df_merged.to_sql(TABLE_NAME, engine, if_exists="replace", index=False)
+        cols = pd.read_sql(f"""
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_schema='public' AND table_name='{TABLE_NAME}'
+        ORDER BY ordinal_position
+        """, engine)
+        print("DB columns now:", cols["column_name"].tolist())
+
+        
         print(f"Successfully saved {len(df_merged)} unique records to table '{TABLE_NAME}' in the database.")
 
     except Exception as e:
+        import traceback
         print("\nError while saving to database:")
-        print(str(e))
+        print(traceback.format_exc())
 else:
     print("No new trades found, nothing is saved to the database.")

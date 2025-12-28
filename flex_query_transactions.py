@@ -110,7 +110,7 @@ if not df.empty:
             fmt_qty(row.get("Quantity")),
         ]
         fingerprint = "|".join(parts)
-        return hashlib.sha1(fingerprint.encode("utf-8")).hexdigest()
+        return hashlib.md5(fingerprint.encode("utf-8")).hexdigest()
 
     df["Trade_id"] = df.apply(make_trade_id, axis=1)
 

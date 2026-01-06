@@ -143,8 +143,8 @@ if not df.empty:
         engine = create_engine(DB_URL)
 
         with engine.connect() as conn:
-            dbinfo = conn.execute("SELECT current_database(), current_user").fetchone()
-            print("Connected to:", dbinfo)
+            dbinfo = conn.exec_driver_sql("SELECT current_database(), current_user").fetchone()
+            print("Connected to:", dbinfo, flush=True)
 
         # ✅ správne načítanie tabuľky
         import traceback

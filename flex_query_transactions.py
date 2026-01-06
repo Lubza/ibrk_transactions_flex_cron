@@ -6,6 +6,19 @@ import time
 from sqlalchemy import create_engine
 import hashlib
 
+#
+import os, subprocess
+
+print("RUN VERSION: v9999 2026-01-06", flush=True)
+
+print("RENDER_GIT_COMMIT:", os.environ.get("RENDER_GIT_COMMIT"), flush=True)
+
+try:
+    print("git HEAD:", subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip(), flush=True)
+except Exception as e:
+    print("git HEAD not available:", repr(e), flush=True)
+#
+
 flex_query_id = os.environ.get("FLEX_QUERY_ID")
 token = os.environ.get("FLEX_TOKEN")
 DB_URL = os.environ.get("DB_URL")

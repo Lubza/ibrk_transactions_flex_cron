@@ -25,6 +25,8 @@ UNDERLYING_SYMBOL_MAP = {
 # --------------------------------------
 #-
 
+print("RUN VERSION: Trade_id enabled v9999 2026-01-06")
+
 # 1. Get reference code
 url_req = f"https://ndcdyn.interactivebrokers.com/AccountManagement/FlexWebService/SendRequest?t={token}&q={flex_query_id}&v=3"
 response = requests.get(url_req)

@@ -166,7 +166,8 @@ if not df.empty:
 
         # ✅ zapíš späť
         print("Rows - new:", len(df), "old:", len(df_old), "merged:", len(df_merged))
-        df_merged.to_sql(TABLE_NAME, engine, if_exists="replace", index=False)
+        #df_merged.to_sql(TABLE_NAME, engine, if_exists="replace", index=False)
+        df.to_sql(TABLE_NAME, engine, if_exists="append", index=False)
         cols = pd.read_sql(f"""
         SELECT column_name
         FROM information_schema.columns
@@ -176,7 +177,7 @@ if not df.empty:
         print("DB columns now:", cols["column_name"].tolist())
 
         
-        print(f"Successfully saved {len(df_merged)} unique records to table '{TABLE_NAME}' in the database.")
+        print(f"Successfully appended {len(df)} rows to table '{TABLE_NAME}'.")
 
     except Exception as e:
         import traceback

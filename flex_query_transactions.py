@@ -114,6 +114,12 @@ if not df.empty:
             return str(int(x))
         # otherwise keep reasonable precision
         return f"{float(x):.6f}".rstrip("0").rstrip(".")
+    
+        # ✅ NEW: stable formatting for TradePrice (and other floats)
+    def fmt_num(x):
+        if x is None or (isinstance(x, float) and pd.isna(x)):
+            return ""
+        return f"{float(x):.10f}".rstrip("0").rstrip(".")
 
     def make_trade_id(row):
         parts = [

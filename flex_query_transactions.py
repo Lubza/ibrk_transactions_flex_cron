@@ -123,6 +123,7 @@ if not df.empty:
             str(row.get("CurrencyPrimary") or "").strip().upper(),
             str(row.get("TradeDate") or "").strip(),   # keep as provided (YYYYMMDD)
             fmt_qty(row.get("Quantity")),
+            fmt_num(row.get("TradePrice")),   # ✅ NEW: include TradePrice
         ]
         fingerprint = "|".join(parts)
         return hashlib.md5(fingerprint.encode("utf-8")).hexdigest()
